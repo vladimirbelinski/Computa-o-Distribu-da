@@ -1,2 +1,2 @@
-# Computa-o-Distribu-da
+# Computacao_Distribuida
 Trabalhos de Computação Distribuída
