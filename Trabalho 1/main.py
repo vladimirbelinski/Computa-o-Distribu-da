@@ -1,5 +1,4 @@
 from bottle import run, get, post, view, request, redirect, route, static_file
-import bottle
 
 chat_content = []
 
@@ -15,6 +14,6 @@ def renderChat():
     message = request.forms.getunicode('message')
     if name != None and message != None:
         chat_content.append([name, message])
-    return {'name': name, 'chat_content': chat_content}
+    return dict(name=name, chat_content=chat_content)
 
 run(host='localhost', port=8080)

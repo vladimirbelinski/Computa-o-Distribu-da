@@ -7,14 +7,13 @@
    <link type="text/css" rel="stylesheet" href="static/css/materialize.min.css"  media="screen,projection"/>
    <!--Let browser know website is optimized for mobile-->
    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-   <!-- <meta http-equiv="refresh" content="5"/> -->
    <title>Chat</title>
  </head>
 
 <body>
   <div class="row">
     <div class="input-field col s12 m6 l5">
-      <form class="col s12" action="" method="POST">
+      <form class="col s12" action="/chat" method="POST">
         <div class="row">
           <div class="input-field col s12 m12 l12">
             <i class="material-icons prefix">account_circle</i>
@@ -43,7 +42,7 @@
       </form>
     </div>
     <div id="chat" class="input-field col s12 m6 l7">
-      <div class="card teal">
+      <div id="intChat" class="card teal">
         <div class="card-content white-text">
           <span class="card-title">Chat:</span>
           <p>
@@ -55,18 +54,14 @@
           </p>
         </div>
       </div>
-      <!-- <h4>Test</h4> -->
     </div>
   </div>
   <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
   <script type="text/javascript" src="static/js/materialize.min.js"></script>
-  <!-- <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  <!-- To reload only the chat div: using AJAX and realoading every 1000 milliseconds -->
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
   <script type="text/javascript">
-    var auto_refresh = setInterval(
-      function ()
-      {
-        $("#chat").load("test.tpl");
-      }, 1000);
-      </script> -->
+    var auto_refresh = setInterval(function (){ $("#chat").load("/chat #intChat");}, 1000);
+  </script>
 </body>
 </html>
