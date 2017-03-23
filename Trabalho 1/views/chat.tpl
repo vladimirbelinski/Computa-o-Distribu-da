@@ -12,6 +12,18 @@
 
 <body>
   <div class="row">
+    <div class="input-field col s12 m12 l12">
+      <div class="card">
+        <div class="card-image">
+          <img src="static/teal.jpg">
+        </div>
+        <div class="card-content">
+          <span class="card-title grey-text text-darken-4">Distributed Computing 2017.1 - Activity 1 - Chat</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
     <div class="input-field col s12 m6 l5">
       <form class="col s12" action="/chat" method="POST">
         <div class="row">

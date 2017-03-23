@@ -1,4 +1,4 @@
-from bottle import run, get, post, view, request, redirect, route, static_file
+from bottle import run, get, post, view, request, route, static_file
 
 chat_content = []
 
