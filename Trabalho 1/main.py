@@ -3,9 +3,9 @@ import bottle
 
 chat_content = []
 
-@bottle.route('/static/<path:path>')
-def server_static(path):
-    return static_file(path, root='static')
+@route('/static/<filepath:path>')
+def server_static(filepath):
+    return static_file(filepath, root='static')
 
 @get('/chat')
 @post('/chat')
