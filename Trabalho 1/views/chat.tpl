@@ -1,3 +1,8 @@
+<!-- Filename: chat.tpl
+     Author: Vladimir Belinski
+     Description: client side of a chat application
+-->
+
 <!DOCTYPE html>
 <html>
  <head>
@@ -53,7 +58,7 @@
         </div>
       </form>
     </div>
-    <div id="chat" class="input-field col s12 m6 l7">
+    <div id="chat" class="input-field col s12 m6 l7" action="/chat" method="GET">
       <div id="intChat" class="card teal">
         <div class="card-content white-text">
           <span class="card-title">Chat:</span>
