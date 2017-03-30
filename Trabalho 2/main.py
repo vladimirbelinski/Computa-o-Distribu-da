@@ -103,12 +103,15 @@ def dumpsMsg():
     # chatContent is transformed into a list, because it is originally a set
     return json.dumps(list(chatContent))
 
+# getMessagesFrom(p) get the messages from peer 'p'
 def getMessagesFrom(p):
     try:
         r = requests.get("http://" + p + "/chatContent")
+        # 200 OK is the code for success
         if r.status_code == 200:
-            obj = json.loads(r.text)
-            return set((a, b) for [a,b] in obj)
+            pMsg = json.loads(r.text)
+            return set((a, b) for [a,b] in pMsg)
+
     except:
         print("Connection Error!")
     return set([])
