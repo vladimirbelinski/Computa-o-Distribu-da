@@ -30,7 +30,7 @@
   </div>
   <div class="row">
     <div class="input-field col s12 m6 l5">
-      <form class="col s12" action="/chat" method="POST">
+      <form class="col s12" action="/send" method="POST">
         <div class="row">
           <div class="input-field col s12 m12 l12">
             <i class="material-icons prefix">account_circle</i>
@@ -58,7 +58,7 @@
         </div>
       </form>
     </div>
-    <div id="chat" class="input-field col s12 m6 l7" action="/chat" method="GET">
+    <div id="chat" class="input-field col s12 m6 l7">
       <div id="intChat" class="card teal">
         <div class="card-content white-text">
           <span class="card-title">Chat:</span>
