@@ -1,6 +1,7 @@
 <!-- Filename: chat.tpl
      Author: Vladimir Belinski
-     Description: client side of a chat application (with multicast)
+     Description: client side of a chat application (with multicast - the messages are not
+     ordered in this version)
 -->
 
 <!DOCTYPE html>

@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 # Filename: main.py
 # Author: Vladimir Belinski
-# Description: server side of a chat application (with multicast)
+# Description: server side of a chat application (with multicast - the messages are not
+# ordered in this version)
 
 from bottle import run, get, post, view, request, route, static_file, template, redirect
 import bottle
@@ -58,60 +60,81 @@ def sendMessage():
         name = nme
         redirect('/chat')
 
+# json.dumps(obj, fp, ...) serialize obj as a JSON formatted stream to fp (a .write()-supporting
+# file-like object) using a conversion table that can be found here:
+# https://docs.python.org/3/library/json.html#py-to-json-table
+
+# dumpsPeers() returns a 'JSON list' with the peers known
 @get('/peers')
 def dumpsPeers():
     return json.dumps(peers)
 
 def checkPeers():
     global lock
+    # time.sleep() for debugging
     time.sleep(5)
     while True:
         time.sleep(1)
         newPeers = []
         for p in peers:
             try:
-                r = requests.get(p + '/peers')
+                # requests.get("http://" + p + '/peers') will return the peers known by host 'p' if this server is not
+                # down. E.g.: if server 8080 knows 8081 and 8082 it will be returned
+                # ["localhost:8080", "localhost:8082"]
+                r = requests.get("http://" + p + '/peers')
+                # if this line is reached it means that p is not down
                 newPeers.append(p)
+                # list.extend(seq): the method extend() appends the contents of seq to list
+                # json.loads(fp, ...) deserialize fp (a .write()-supporting file-like object containing a
+                # JSON document) to a Python object.
                 newPeers.extend(json.loads(r.text))
             except:
                 pass
 
             time.sleep(1)
         with lock:
+            # newPeers is transformed into a 'set' to eliminate duplicates. After that it is transformed into
+            # a list again and extended to peers
             peers.extend(list(set(newPeers)))
 
 @get('/chatContent')
+# dumpsMsg() returns a 'JSON list' with the messages known
 def dumpsMsg():
+    # chatContent is transformed into a list, because it is originally a set
     return json.dumps(list(chatContent))
 
 def getMessagesFrom(p):
-    link = "http://" + p + "/chatContent"
     try:
-        r = requests.get(link)
+        r = requests.get("http://" + p + "/chatContent")
         if r.status_code == 200:
             obj = json.loads(r.text)
-            setT = set((a, b) for [a,b] in obj)
-            return setT
+            return set((a, b) for [a,b] in obj)
     except:
-        print("Connection Error")
+        print("Connection Error!")
     return set([])
 
 def unionMsg():
     while True:
         time.sleep(1)
-        newMessage = set([])
+        newMsg = set([])
         global chatContent
         for p in peers:
             time.sleep(1)
             msgFromPeer = getMessagesFrom(p)
-            print(msgFromPeer)
+            # print(msgFromPeer)
+            # if the messages from peer 'p' are different from the messages from
+            # chatContent then newMsg is overwritten by the new messages (only ->
+            # newMsg.union(msgFromPeer.difference(chatContent))). After this, the
+            # content of newMsg is united with the content of chatContent
             if msgFromPeer.difference(chatContent):
-                newMessage = newMessage.union(msgFromPeer.difference(chatContent))
-        chatContent = chatContent.union(newMessage)
+                newMsg = newMsg.union(msgFromPeer.difference(chatContent))
+        chatContent = chatContent.union(newMsg)
 
-thrClient = threading.Thread(target=checkPeers)
-thrClient.start()
+# thread for peers
+thrPeers = threading.Thread(target=checkPeers)
+thrPeers.start()
 
+# thread for messages
 thrUnionMsg = threading.Thread(target=unionMsg)
 thrUnionMsg.start()
 
