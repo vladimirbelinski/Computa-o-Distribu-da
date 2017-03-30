@@ -63,9 +63,9 @@
         <div class="card-content white-text">
           <span class="card-title">Chat:</span>
           <p>
-            %for (name, message) in chat_content:
+            %for (nme, message) in chatContent:
             <div style="word-wrap: break-word">
-              <li> <b>{{name}}:</b> {{message}} </li>
+              <li> <b>{{nme}}:</b> {{message}} </li>
             </div>
             %end
           </p>

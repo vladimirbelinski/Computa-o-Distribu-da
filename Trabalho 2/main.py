@@ -3,8 +3,17 @@
 # Description: server side of a chat application (with multicast)
 
 from bottle import run, get, post, view, request, route, static_file, template, redirect
+import bottle
+import json
+import threading
+import requests
+import time
+import sys
 
-chat_content = []
+chatContent = set([])
+name = ""
+peers = ['localhost:' + p for p in sys.argv[2:]]
+lock = threading.Lock()
 
 # The route() decorator links an URL path to a callback function, and adds a new route to
 # the default application.
@@ -20,7 +29,7 @@ def server_static(filepath):
 
 # Just redirecting 'localhost:port/' to 'localhost:port/chat'
 @route('/')
-def chat_redirect():
+def chatRedirect():
     redirect('/chat')
 
 # The HTTP protocol defines several request methods for different tasks. GET is the default
@@ -37,17 +46,75 @@ def chat_redirect():
 @get('/chat')
 @view('chat')
 def chat():
-    name = request.query.name
-    return dict(name=name, chat_content=chat_content)
+    return dict(name=name, chatContent=list(chatContent))
 
 @post('/send')
-def send_message():
-    name = request.forms.getunicode('name')
+def sendMessage():
+    global name
+    nme = request.forms.getunicode('name')
     message = request.forms.getunicode('message')
-    if name != None and message != None:
-        chat_content.append([name, message])
+    if nme != None and message != None:
+        chatContent.add((nme, message))
+        name = nme
         redirect('/chat')
 
-# run() starts a built-in development server. It runs on localhost port 8080 and serves
-# requests until you hit Control-c.
-run(host='localhost', port=8080)
+@get('/peers')
+def dumpsPeers():
+    return json.dumps(peers)
+
+def checkPeers():
+    global lock
+    time.sleep(5)
+    while True:
+        time.sleep(1)
+        newPeers = []
+        for p in peers:
+            try:
+                r = requests.get(p + '/peers')
+                newPeers.append(p)
+                newPeers.extend(json.loads(r.text))
+            except:
+                pass
+
+            time.sleep(1)
+        with lock:
+            peers.extend(list(set(newPeers)))
+
+@get('/chatContent')
+def dumpsMsg():
+    return json.dumps(list(chatContent))
+
+def getMessagesFrom(p):
+    link = "http://" + p + "/chatContent"
+    try:
+        r = requests.get(link)
+        if r.status_code == 200:
+            obj = json.loads(r.text)
+            setT = set((a, b) for [a,b] in obj)
+            return setT
+    except:
+        print("Connection Error")
+    return set([])
+
+def unionMsg():
+    while True:
+        time.sleep(1)
+        newMessage = set([])
+        global chatContent
+        for p in peers:
+            time.sleep(1)
+            msgFromPeer = getMessagesFrom(p)
+            print(msgFromPeer)
+            if msgFromPeer.difference(chatContent):
+                newMessage = newMessage.union(msgFromPeer.difference(chatContent))
+        chatContent = chatContent.union(newMessage)
+
+thrClient = threading.Thread(target=checkPeers)
+thrClient.start()
+
+thrUnionMsg = threading.Thread(target=unionMsg)
+thrUnionMsg.start()
+
+# run() starts a built-in development server. It runs on localhost port given in argv[1] and
+# serves requests until you hit Control-c.
+run(host='localhost', port=int(sys.argv[1]))

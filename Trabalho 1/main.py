@@ -4,7 +4,8 @@
 
 from bottle import run, get, post, view, request, route, static_file, template, redirect
 
-chat_content = []
+chatContent = []
+name = ""
 
 # The route() decorator links an URL path to a callback function, and adds a new route to
 # the default application.
@@ -20,7 +21,7 @@ def server_static(filepath):
 
 # Just redirecting 'localhost:port/' to 'localhost:port/chat'
 @route('/')
-def chat_redirect():
+def chatRedirect():
     redirect('/chat')
 
 # The HTTP protocol defines several request methods for different tasks. GET is the default
@@ -37,15 +38,16 @@ def chat_redirect():
 @get('/chat')
 @view('chat')
 def chat():
-    name = request.query.name
-    return dict(name=name, chat_content=chat_content)
+    return dict(name=name, chatContent=chatContent)
 
 @post('/send')
-def send_message():
-    name = request.forms.getunicode('name')
+def sendMessage():
+    global name
+    nme = request.forms.getunicode('name')
     message = request.forms.getunicode('message')
-    if name != None and message != None:
-        chat_content.append([name, message])
+    if nme != None and message != None:
+        chatContent.append([nme, message])
+        name = nme
         redirect('/chat')
 
 # run() starts a built-in development server. It runs on localhost port 8080 and serves
