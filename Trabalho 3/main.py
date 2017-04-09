@@ -53,6 +53,7 @@ name = ""
 peers = ['http://localhost:' + p for p in sys.argv[2:]]
 lock = threading.Lock()
 vc = VC('http://localhost:' + sys.argv[1])
+d={}
 
 # The route() decorator links an URL path to a callback function, and adds a new
 # route to the default application.
@@ -96,8 +97,8 @@ def sendMessage():
     message = request.forms.getunicode('message')
     if nme != None and message != None:
         vc.increment()
-        # Todo: add vector clock to chatContent ******************************************************************************************
-        chatContent.add((nme, message))
+        # Todo: add vector clock to chatContent: como adicionar ao set o conteúdo do dict? Necessário criar algo como um dict de dict (d[(nme, message)] = vc.vectorClock)? ********************************************************************************************************
+        chatContent.add((name, message))
         name = nme
         redirect('/chat')
 
@@ -174,7 +175,7 @@ def unionMsg():
             # -> newMsg.union(msgFromPeer.difference(chatContent))). After this,
             # the content of newMsg is united with the content of chatContent
             if msgFromPeer.difference(chatContent):
-                # Todo: vector clock update: vc.update(p) --> Does it work for multiple messages? ******************************************
+                # Todo: vector clock update: para as mensagens novas preciso incrementar o valor de minha chave antes de adicionar à chatContent. Se recebo n mensagens preciso incrementar n vezes (uma para cada mensagem)? **********************************
                 newMsg = newMsg.union(msgFromPeer.difference(chatContent))
         chatContent = chatContent.union(newMsg)
 
