@@ -1,13 +1,26 @@
+# From Colouris et al.: a vector clock for a system of N processes is an array of N
+# integers. Each process keeps its own vector clock, V_i, which it uses to timestamp
+# local events. Processes piggyback vector timestamps on the messages they send to one
+# another, and there are simple rules for updating the clocks:
+# VC1: initially, V_i[j] = 0, for i,j = 1, 2, ..., N
+# VC2: just before p_i timestamps an event, it sets V_i[j] := V_i[i] + 1
+# VC3: p_i includes the value t = V_i in every message it sends
+# VC4: when p_i receives a timestamp t in a message it sets V_i[j] := max(V_i[j], t[j]),
+#      for j = 1, 2, ..., N. Taking the componentwise maximum of two vectors timestamps
+#      in this way is known as a merge operation.
 class VC:
     def __init__(self, name):
         self.name = name
         self.vectorClock = { self.name : 0 }
 
-    # Starting unexplored area...
+    # repr(object) returns a string containing a printable representation of an object.
+    # A class can control what this function returns for its instances by defining a
+    # __repr__() method.
     def __repr__(self):
         return "V%s" % repr(self.vectorClock)
 
     # Isso está errado: a ordem não é total
+    # object.__lt__(self, other) is a "rich comparison" method. x < y calls x.__lt__(y)
     def __lt__(self, o):
         ks = list(set(self.vectorClock.keys()).union(set(o.vectorClock.keys())))
         ks.sort()
@@ -20,7 +33,6 @@ class VC:
             if nextv(k, self.vectorClock) > nextv(k, o.vectorClock):
                 return False
         return True
-    # Ending unexplored area...
 
     def increment(self):
         self.vectorClock[self.name] += 1
@@ -29,12 +41,12 @@ class VC:
     def update(self, sender):
         # Incrementing when receiving a message
         self.increment();
-        for (name, vectorClock) in sender.vectorClock.items():
-            if name in self.vectorClock:
-                if vectorClock >= self.vectorClock[name]:
-                    self.vectorClock[name] = vectorClock
+        for (key, value) in sender.vectorClock.items():
+            if key in self.vectorClock:
+                if value >= self.vectorClock[key]:
+                    self.vectorClock[key] = value
             else:
-                self.vectorClock[name] = vectorClock
+                self.vectorClock[key] = value
 
 v1 = VC("http://localhost:8080/")
 v2 = VC("http://localhost:8081/")
