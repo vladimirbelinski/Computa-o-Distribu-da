@@ -5,6 +5,7 @@
 # version a vector is used to order the messages.
 
 from bottle import run, get, post, view, request, route, static_file, template, redirect
+from frozendict import frozendict
 import bottle
 import json
 import threading
@@ -41,19 +42,14 @@ class VC:
     def update(self, sender):
         # Incrementing when receiving a message
         self.increment();
-        for (key, value) in sender.vectorClock.items():
-            if key in self.vectorClock:
-                if value >= self.vectorClock[key]:
-                    self.vectorClock[key] = value
-            else:
-                self.vectorClock[key] = value
+        for (key, value) in sender.items():
+            if key not in vc.vectorClock or vc.vectorClock[key] < sender[key]:
+                vc.vectorClock[key] = value
 
 chatContent = set([])
-name = ""
 peers = ['http://localhost:' + p for p in sys.argv[2:]]
 lock = threading.Lock()
 vc = VC('http://localhost:' + sys.argv[1])
-d={}
 
 # The route() decorator links an URL path to a callback function, and adds a new
 # route to the default application.
@@ -63,9 +59,31 @@ d={}
 # where to find them.The static_file() function is a helper to serve files in a
 # safe and convenient way.To serve files in subdirectories it's necessary to use
 # the :path filter in the wildcard: <filepath:path>.
-@route('/static/<filepath:path>')
+@bottle.route('/static/<filepath:path>')
 def server_static(filepath):
     return static_file(filepath, root='static')
+
+def lt(a, b):
+    keys = list(set(a[2].keys()).union(b[2].keys()))
+    keys.sort()
+    a = tuple(a[2][k] if k in a[2] else 0 for k in keys)
+    b = tuple(b[2][k] if k in b[2] else 0 for k in keys)
+    for i in range(0, len(a) - 1):
+        if a < b: return True
+        if b < a: return False
+    return False
+
+allMsg = []
+
+def sortMsg():
+    global allMsg
+    for i in range(1, len(allMsg)):
+        key = allMsg[i]
+        k = i
+        while k > 0 and lt(key, allMsg[k - 1]):
+            allMsg[k] = allMsg[k - 1]
+            k -= 1
+            allMsg[k] = key
 
 # Just redirecting 'localhost:port/' to 'localhost:port/chat'
 @route('/')
@@ -88,18 +106,22 @@ def chatRedirect():
 @get('/chat')
 @view('chat')
 def chat():
-    return dict(name=name, chatContent=list(chatContent))
+    global allMsg
+    name = request.query.name
+    allMsg = list(chatContent)
+    sortMsg()
+    return dict(name=name, chatContent=list(allMsg))
 
 @post('/send')
 def sendMessage():
-    global name
-    nme = request.forms.getunicode('name')
+    name = request.forms.getunicode('name')
     message = request.forms.getunicode('message')
-    if nme != None and message != None:
+    if name != None and message != None:
         vc.increment()
-        # Todo: add vector clock to chatContent: como adicionar ao set o conteúdo do dict? Necessário criar algo como um dict de dict (d[(nme, message)] = vc.vectorClock)? ********************************************************************************************************
-        chatContent.add((name, message))
-        name = nme
+        aux = (name, message, frozendict(vc.vectorClock))
+        chatContent.add(aux)
+        redirect('chat?name=' + name)
+    else:
         redirect('/chat')
 
 # json.dumps(obj, fp, ...) serialize obj as a JSON formatted stream to fp
@@ -145,8 +167,7 @@ def checkPeers():
 @get('/chatContent')
 # dumpsMsg() returns a 'JSON list' with the messages known
 def dumpsMsg():
-    # chatContent is transformed into a list, because it is originally a set
-    return json.dumps(list(chatContent))
+    return json.dumps([(name, message, dict(vectorClock)) for (name, message, vectorClock) in chatContent])
 
 # getMessagesFrom(p) get the messages from peer 'p'
 def getMessagesFrom(p):
@@ -155,7 +176,7 @@ def getMessagesFrom(p):
         # 200 OK is the code for success
         if r.status_code == 200:
             pMsg = json.loads(r.text)
-            return set((a, b) for [a,b] in pMsg)
+            return set((a, b, frozendict(t)) for [a, b, t] in pMsg)
 
     except:
         print("Connection Error!")
@@ -164,20 +185,17 @@ def getMessagesFrom(p):
 def unionMsg():
     while True:
         time.sleep(1)
-        newMsg = set([])
         global chatContent
         for p in peers:
             time.sleep(1)
             msgFromPeer = getMessagesFrom(p)
-            # print(msgFromPeer)
             # if the messages from peer 'p' are different from the messages from
-            # chatContent then newMsg is overwritten by the new messages (only
-            # -> newMsg.union(msgFromPeer.difference(chatContent))). After this,
-            # the content of newMsg is united with the content of chatContent
-            if msgFromPeer.difference(chatContent):
-                # Todo: vector clock update: para as mensagens novas preciso incrementar o valor de minha chave antes de adicionar à chatContent. Se recebo n mensagens preciso incrementar n vezes (uma para cada mensagem)? **********************************
-                newMsg = newMsg.union(msgFromPeer.difference(chatContent))
-        chatContent = chatContent.union(newMsg)
+            # chatContent, then, for each new message, the value in the
+            # vectorClock is updated (because a new message was received) and
+            # the new message(s) are added to chatContent
+            for (name, message, vectorClock) in msgFromPeer.difference(chatContent):
+                vc.update(vectorClock)
+                chatContent.add((name, message, vectorClock))
 
 # thread for peers
 thrPeers = threading.Thread(target=checkPeers)

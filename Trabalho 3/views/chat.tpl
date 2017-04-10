@@ -64,7 +64,7 @@
         <div class="card-content white-text">
           <span class="card-title">Chat:</span>
           <p>
-            %for (nme, message) in chatContent:
+            %for (nme, message, vectorClock) in chatContent:
             <div style="word-wrap: break-word">
               <li> <b>{{nme}}:</b> {{message}} </li>
             </div>
