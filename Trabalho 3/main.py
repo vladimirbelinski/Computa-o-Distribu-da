@@ -42,13 +42,17 @@ class VC:
     def update(self, sender):
         # Incrementing when receiving a message
         self.increment();
+        # Creating a new entry if the key does not exist or updating the value
+        # associated to the key if it is greater than the existing one
         for (key, value) in sender.items():
             if key not in vc.vectorClock or vc.vectorClock[key] < sender[key]:
                 vc.vectorClock[key] = value
 
 chatContent = set([])
+# Each peer will be named http://localhost:port
 peers = ['http://localhost:' + p for p in sys.argv[2:]]
 lock = threading.Lock()
+# Each vectorClock key will be named http://localhost:port
 vc = VC('http://localhost:' + sys.argv[1])
 
 # The route() decorator links an URL path to a callback function, and adds a new
@@ -105,6 +109,7 @@ def chatRedirect():
 
 @get('/chat')
 @view('chat')
+# The chatContent is sorted before be returned to be displayed in screen
 def chat():
     global allMsg
     name = request.query.name
@@ -117,6 +122,9 @@ def sendMessage():
     name = request.forms.getunicode('name')
     message = request.forms.getunicode('message')
     if name != None and message != None:
+        # Before sending a message, the position of the host that is sending it
+        # must be incremented in its vectorClock. Also, the vectorClock is
+        # included in the message, together with the name/message data
         vc.increment()
         aux = (name, message, frozendict(vc.vectorClock))
         chatContent.add(aux)
@@ -176,7 +184,7 @@ def getMessagesFrom(p):
         # 200 OK is the code for success
         if r.status_code == 200:
             pMsg = json.loads(r.text)
-            return set((a, b, frozendict(t)) for [a, b, t] in pMsg)
+            return set((name, message, frozendict(vectorClock)) for [name, message, vectorClock] in pMsg)
 
     except:
         print("Connection Error!")
