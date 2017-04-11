@@ -24,7 +24,7 @@
           <img src="static/teal.jpg">
         </div>
         <div class="card-content">
-          <span class="card-title grey-text text-darken-4">Distributed Computing 2017.1 - Activity 1 - Chat</span>
+          <span class="card-title grey-text text-darken-4">Distributed Computing 2017.1 - Activity 2 - Chat (with multicast)</span>
         </div>
       </div>
     </div>

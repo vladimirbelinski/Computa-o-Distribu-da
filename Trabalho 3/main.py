@@ -2,7 +2,7 @@
 # Filename: main.py
 # Author: Vladimir Belinski
 # Description: server side of a chat application (with multicast). In this
-# version a vector is used to order the messages.
+# version a vector clock is used to help in the sort of messages.
 
 from bottle import run, get, post, view, request, route, static_file, template, redirect
 from frozendict import frozendict
@@ -68,7 +68,7 @@ def lt(a, b):
     keys.sort()
     a = tuple(a[2][k] if k in a[2] else 0 for k in keys)
     b = tuple(b[2][k] if k in b[2] else 0 for k in keys)
-    for i in range(0, len(a) - 1):
+    for i in range(0, len(a)):
         if a < b: return True
         if b < a: return False
     return False

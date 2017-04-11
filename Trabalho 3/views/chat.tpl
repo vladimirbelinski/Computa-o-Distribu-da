@@ -1,7 +1,7 @@
 <!-- Filename: chat.tpl
      Author: Vladimir Belinski
      Description: client side of a chat application (with multicast). In this
-     version a vector is used to order the messages.
+     version a vector clock is used to help in the sort of messages.
 -->
 
 <!DOCTYPE html>
@@ -24,7 +24,7 @@
           <img src="static/teal.jpg">
         </div>
         <div class="card-content">
-          <span class="card-title grey-text text-darken-4">Distributed Computing 2017.1 - Activity 1 - Chat</span>
+          <span class="card-title grey-text text-darken-4">Distributed Computing 2017.1 - Activity 3 - Chat (with multicast and vector clock)</span>
         </div>
       </div>
     </div>
