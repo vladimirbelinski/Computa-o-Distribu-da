@@ -6,10 +6,10 @@
 
 from bottle import run, get, post, view, request, route, static_file, template, redirect
 from frozendict import frozendict
-import bottle
-import json
 import threading
 import requests
+import bottle
+import json
 import time
 import sys
 
@@ -48,12 +48,50 @@ class VC:
             if key not in vc.vectorClock or vc.vectorClock[key] < sender[key]:
                 vc.vectorClock[key] = value
 
+name = ""
+chatContentStd = []
 chatContent = set([])
+lock = threading.Lock()
+# Each VC key will be named http://localhost:port
+vc = VC('http://localhost:' + sys.argv[1])
 # Each peer will be named http://localhost:port
 peers = ['http://localhost:' + p for p in sys.argv[2:]]
-lock = threading.Lock()
-# Each vectorClock key will be named http://localhost:port
-vc = VC('http://localhost:' + sys.argv[1])
+
+# lt() checks if 'suc' (a key in chatContentStd) is less than 'ant' (the
+# antecessor of 'suc' in chatContentStd)
+def lt(suc, ant):
+    # The keys of the vectorClocks (position [2]) of 'suc' and 'ant' are united
+    # and sorted
+    keys = list(set(suc[2].keys()).union(ant[2].keys()))
+    keys.sort()
+    # A tuple is created for 'suc' and another tuple is created for 'ant': for
+    # each entry in the list of keys made with the union of 'suc' and 'ant', the
+    # original value associated to that key (in the respective vectorClock) is
+    # held (if it exists); otherwise, '0' is associated to that key
+    suc = tuple(suc[2][k] if k in suc[2] else 0 for k in keys)
+    ant = tuple(ant[2][k] if k in ant[2] else 0 for k in keys)
+    # The values associated to the keys are compared
+    # If it is found a value in 'suc' that is less than another value in 'ant'
+    # for the same position, it's considerated that 'suc' < 'ant'.
+    # If it is found a value in 'ant' that is less than another value in 'suc'
+    # for the same position, it's considerated that 'ant' < 'suc'.
+    # If there is not a position with the cases above, 'suc' and 'ant' are equal,
+    # something that will not occur...
+    for i in range(0, len(suc)):
+        if suc < ant: return True
+        if ant < suc: return False
+    return False
+
+# sortMsg() is an insertion sort for the messages in chatContentStd
+def sortMsg():
+    global chatContentStd
+    for i in range(1, len(chatContentStd)):
+        key = chatContentStd[i]
+        k = i
+        while k > 0 and lt(key, chatContentStd[k - 1]):
+            chatContentStd[k] = chatContentStd[k - 1]
+            k -= 1
+            chatContentStd[k] = key
 
 # The route() decorator links an URL path to a callback function, and adds a new
 # route to the default application.
@@ -66,28 +104,6 @@ vc = VC('http://localhost:' + sys.argv[1])
 @bottle.route('/static/<filepath:path>')
 def server_static(filepath):
     return static_file(filepath, root='static')
-
-def lt(a, b):
-    keys = list(set(a[2].keys()).union(b[2].keys()))
-    keys.sort()
-    a = tuple(a[2][k] if k in a[2] else 0 for k in keys)
-    b = tuple(b[2][k] if k in b[2] else 0 for k in keys)
-    for i in range(0, len(a)):
-        if a < b: return True
-        if b < a: return False
-    return False
-
-allMsg = []
-
-def sortMsg():
-    global allMsg
-    for i in range(1, len(allMsg)):
-        key = allMsg[i]
-        k = i
-        while k > 0 and lt(key, allMsg[k - 1]):
-            allMsg[k] = allMsg[k - 1]
-            k -= 1
-            allMsg[k] = key
 
 # Just redirecting 'localhost:port/' to 'localhost:port/chat'
 @route('/')
@@ -111,24 +127,26 @@ def chatRedirect():
 @view('chat')
 # The chatContent is sorted before be returned to be displayed in screen
 def chat():
-    global allMsg
-    name = request.query.name
-    allMsg = list(chatContent)
+    global chatContentStd
+    # name = request.query.name
+    chatContentStd = list(chatContent)
     sortMsg()
-    return dict(name=name, chatContent=list(allMsg))
+    return dict(name=name, chatContent=list(chatContentStd))
 
 @post('/send')
 def sendMessage():
-    name = request.forms.getunicode('name')
+    global name
+    nme = request.forms.getunicode('name')
     message = request.forms.getunicode('message')
-    if name != None and message != None:
+    if nme != None and message != None:
         # Before sending a message, the position of the host that is sending it
         # must be incremented in its vectorClock. Also, the vectorClock is
         # included in the message, together with the name/message data
         vc.increment()
-        aux = (name, message, frozendict(vc.vectorClock))
+        aux = (nme, message, frozendict(vc.vectorClock))
         chatContent.add(aux)
-        redirect('chat?name=' + name)
+        name = nme
+        redirect('chat?name=' + nme)
     else:
         redirect('/chat')
 

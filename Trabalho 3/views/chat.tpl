@@ -13,6 +13,7 @@
    <link type="text/css" rel="stylesheet" href="static/css/materialize.min.css"  media="screen,projection"/>
    <!--Let browser know website is optimized for mobile-->
    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+   <meta charset="utf-8">
    <title>Chat</title>
  </head>
 
@@ -65,7 +66,7 @@
           <span class="card-title">Chat:</span>
           <p>
             %for (nme, message, vectorClock) in chatContent:
-            <div style="word-wrap: break-word">
+            <div style="word-wrap: break-word; word-break: break-all;">
               <li> <b>{{nme}}:</b> {{message}} </li>
             </div>
             %end
