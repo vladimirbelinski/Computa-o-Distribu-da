@@ -1,4 +1,4 @@
-# Filename: index.tpl
+# Filename: main.py
 # Authors: Acácia dos Campos da Terra, João Pedro Winckler Bernardi, Matheus
 #          Henrique Trichez and  Vladimir Belinski
 # Description: server side of the application.
