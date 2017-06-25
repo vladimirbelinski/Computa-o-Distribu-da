@@ -1,0 +1,32 @@
+# Arquivo: ideia.txt
+# Autores: Acácia dos Campos da Terra, João Pedro Winckler Bernardi, Matheus Henrique Trichez
+					 e  Vladimir Belinski
+# Descrição: descrição geral da ideia do projeto final
+
+Banco de dados: chave valor
+
+Processo 1 - Garante que o algoritmo continue:
+enquanto Verdadeiro:
+	 se tempoPassadoDesdeUltimaAcao > 1seg:
+	    para todo servidor conhecido:
+	    	 enviar NOP
+
+Processo 2 - Remover um servidor morto:
+enquanto Verdadeiro:
+	 para todo servidor y
+	      se não foi recebida nenhuma ação nos ultimos 5 segundos
+	      	 se os outros servidores dizem que isso é real oficial:
+		    tiro ele da lista de amigos
+
+Processo 3 - Receber ações de outros:
+	 para toda ação x recebida de um servidor y:
+	      Atualizo meu vector clock
+	      Guardo x na fila de prioridade y (ordenada pelo vector clock das ações)
+	      Se com essa mensagem recebida, todas as filas de servidores tem pelo menos uma ação:
+	      	 executo a primeira ação de todo servidor
+
+Processo 4 - realizar ação:
+*c <nome> <valor> - Cria/atualiza variavel <nome> com valor <valor>
+*r <nome>         - Remove variavel <nome>
+*a <nome> <nome1> - Soma o valor atual da variavel <nome> com o valor da variavel <nome1>
+*ai <nome> <valor> - Soma o valor atual da variavel <nome> com o valor <valor>
